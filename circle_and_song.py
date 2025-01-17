@@ -67,13 +67,13 @@ def launch_song(_base_frequency, _form, _duration, _rotation_speed):
             print("Lecture du son mixé...")
             print(mixed_sound)
             draw_graph(mixed_sound[:100000])
-            sd.play(mixed_sound, samplerate=samplerate)
-            sd.wait()
+            # sd.play(mixed_sound, samplerate=samplerate)
+            # sd.wait()
             print("Lecture terminée.")
         except Exception as e:
             print(f"Erreur lors de la lecture ou du mixage : {e}")
 
-    play_and_mix_wav("carotte.wav", stereo_sound[90000:900000], fs, wav_weight=0.3)
+    play_and_mix_wav("carotte.wav", stereo_sound, fs, wav_weight=0.3)
 
     print("Le son a été joué. Connecte un oscilloscope pour visualiser le cercle avec des perturbations dynamiques.")
 
