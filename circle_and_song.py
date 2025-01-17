@@ -34,6 +34,36 @@ def launch_song(_base_frequency, _form, _duration, _rotation_speed):
         plt.ylabel("Amplitude")
         plt.title("Signal Audio Stéréo")
         plt.show()
+    
+    def check_if_kik(mixed_sound_data):
+        """
+        En gros je me dis je peux faire plusieurs choses. Je peux travailler sur le son déjà mixé
+        Mais je peux aussi save les indices des kiks et modifier la boucle initial pour les 5 seconde suivante
+
+        Objectif : Afficher la chips aprs chaque kik
+        """
+        audio_canal_right = mixed_sound_data[:1000,0]
+        maxi_normal = max(audio_canal_right)
+        print(mixed_sound_data[:900000,0])
+        maxi_all = max(mixed_sound_data[:900000,0])
+
+        maxi_moy = (maxi_normal + maxi_all)/2
+        # maxi_moy = np.mean(maxi_normal,maxi_moy)
+        print('max',maxi_moy)
+        temp = 10000
+
+        i = 0 
+        while i < len(mixed_sound_data):
+            if mixed_sound_data[i,0] > maxi_moy:
+                end_index = min(i + temp, len(mixed_sound_data))
+                mixed_sound_data[i+5000:end_index,0] = 0.0
+                mixed_sound_data[i+5000:end_index,1] = 0.0
+
+                i = end_index 
+            else:
+                i += 1
+
+        return mixed_sound_data
 
     # Lecture et superposition d'un fichier .wav
     def play_and_mix_wav(file_path, generated_sound, samplerate, wav_weight):
@@ -66,14 +96,17 @@ def launch_song(_base_frequency, _form, _duration, _rotation_speed):
             # Lecture du son mixé
             print("Lecture du son mixé...")
             print(mixed_sound)
-            draw_graph(mixed_sound[:100000])
-            # sd.play(mixed_sound, samplerate=samplerate)
-            # sd.wait()
+
+            mixed_sound_2 = check_if_kik(mixed_sound)
+            # draw_graph(mixed_sound[90000:120000])
+            draw_graph(mixed_sound_2[:900000])
+            sd.play(mixed_sound_2, samplerate=samplerate)
+            sd.wait()
             print("Lecture terminée.")
         except Exception as e:
             print(f"Erreur lors de la lecture ou du mixage : {e}")
 
-    play_and_mix_wav("carotte.wav", stereo_sound, fs, wav_weight=0.3)
+    play_and_mix_wav("carotte.wav", stereo_sound[:900000], fs, wav_weight=0.3)
 
     print("Le son a été joué. Connecte un oscilloscope pour visualiser le cercle avec des perturbations dynamiques.")
 
