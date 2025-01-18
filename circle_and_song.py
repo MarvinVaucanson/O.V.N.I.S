@@ -33,9 +33,10 @@ def launch_song(_base_frequency, _form, _duration, _rotation_speed):
         plt.xlabel("Temps (s)")
         plt.ylabel("Amplitude")
         plt.title("Signal Audio Stéréo")
+        plt.grid(True)
         plt.show()
     
-    def check_if_kik(mixed_sound_data):
+    def check_if_kik(mixed_sound_data,wav_data_sound):
         """
         En gros je me dis je peux faire plusieurs choses. Je peux travailler sur le son déjà mixé
         Mais je peux aussi save les indices des kiks et modifier la boucle initial pour les 5 seconde suivante
@@ -50,20 +51,34 @@ def launch_song(_base_frequency, _form, _duration, _rotation_speed):
         maxi_moy = (maxi_normal + maxi_all)/2
         # maxi_moy = np.mean(maxi_normal,maxi_moy)
         print('max',maxi_moy)
-        temp = 10000
+        temp = 100000
 
         i = 0 
         while i < len(mixed_sound_data):
             if mixed_sound_data[i,0] > maxi_moy:
                 end_index = min(i + temp, len(mixed_sound_data))
-                mixed_sound_data[i+5000:end_index,0] = 0.0
-                mixed_sound_data[i+5000:end_index,1] = 0.0
+                mixed_sound_data[i+5000:end_index,0] = wav_data_sound[i+5000:end_index,0]
+                mixed_sound_data[i+5000:end_index,1] = wav_data_sound[i+5000:end_index,1]
 
                 i = end_index 
             else:
                 i += 1
 
         return mixed_sound_data
+
+    def generate_linear_triangle():
+        #first sequence
+        minD = -0.9
+        maxD = 0.9
+        valuesD_1 = np.linspace(minD, maxD, 145)
+
+        #second sequence
+        valuesD_2 = np.linspace(maxD, maxD, 145)
+
+        #third sequence
+        valuesD_3 = np.linspace(maxD,minD,145)
+
+        valuesD = valuesD_1 + valuesD_2
 
     # Lecture et superposition d'un fichier .wav
     def play_and_mix_wav(file_path, generated_sound, samplerate, wav_weight):
@@ -97,11 +112,17 @@ def launch_song(_base_frequency, _form, _duration, _rotation_speed):
             print("Lecture du son mixé...")
             print(mixed_sound)
 
-            mixed_sound_2 = check_if_kik(mixed_sound)
+            mixed_sound_2 = check_if_kik(mixed_sound,wav_data[:900000])
             # draw_graph(mixed_sound[90000:120000])
-            draw_graph(mixed_sound_2[:900000])
-            sd.play(mixed_sound_2, samplerate=samplerate)
-            sd.wait()
+            print(mixed_sound_2[0,0])
+            print(mixed_sound_2[441,0])
+
+            value_canal_droit_triangle = generate_linear_triangle()
+            draw_graph(value_canal_droit_triangle)
+
+            draw_graph(mixed_sound_2[:441])
+            # sd.play(mixed_sound_2, samplerate=samplerate)
+            # sd.wait()
             print("Lecture terminée.")
         except Exception as e:
             print(f"Erreur lors de la lecture ou du mixage : {e}")
