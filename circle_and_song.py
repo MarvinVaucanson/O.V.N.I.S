@@ -66,19 +66,63 @@ def launch_song(_base_frequency, _form, _duration, _rotation_speed):
 
         return mixed_sound_data
 
-    def generate_linear_triangle():
+    def generate_linear_square():
+        minD = -0.49
+        maxD = 0.49
         #first sequence
-        minD = -0.9
-        maxD = 0.9
-        valuesD_1 = np.linspace(minD, maxD, 145)
-
+        valuesD_1 = np.linspace(minD, minD, 110)
         #second sequence
-        valuesD_2 = np.linspace(maxD, maxD, 145)
-
+        valuesD_2 = np.linspace(minD, maxD, 110)
         #third sequence
-        valuesD_3 = np.linspace(maxD,minD,145)
+        valuesD_3 = np.linspace(maxD,maxD,110)
+        #4 sequence
+        valuesD_4 = np.linspace(maxD,minD,110)
 
-        valuesD = valuesD_1 + valuesD_2
+        valuesD = np.concatenate((valuesD_1, valuesD_2, valuesD_3, valuesD_4))
+
+        #first sequence
+        valuesG_1 = np.linspace(minD, maxD, 110)
+        #second sequence
+        valuesG_2 = np.linspace(maxD, maxD, 110)
+        #third sequence
+        valuesG_3 = np.linspace(maxD,minD,110)
+        #4 sequence
+        valuesG_4 = np.linspace(minD,minD,110)
+
+        valuesG = np.concatenate((valuesG_1, valuesG_2, valuesG_3, valuesG_4))
+
+        #on répète le motif n fois
+        combined = np.array([[l, n] for l, n in zip(valuesD, valuesG)])
+        repeated_combined = np.tile(combined, (1000, 1))
+
+        return repeated_combined
+
+    def generate_linear_triangle():
+        minD = -0.49
+        maxD = 0.49
+        #first sequence
+        valuesD_1 = np.linspace(minD, maxD, 147)
+        #second sequence
+        valuesD_2 = np.linspace(maxD, maxD, 147)
+        #third sequence
+        valuesD_3 = np.linspace(maxD,minD,147)
+
+        valuesD = np.concatenate((valuesD_1, valuesD_2, valuesD_3))
+
+        #first sequence
+        valuesG_1 = np.linspace(0,maxD,147)
+        #second sequence
+        valuesG_2 = np.linspace(maxD, minD, 147)
+        #third sequence
+        valuesG_3 = np.linspace(minD,0,147)
+
+        valuesG = np.concatenate((valuesG_1, valuesG_2, valuesG_3))
+
+        #on répète le motif n fois
+        combined = np.array([[l, n] for l, n in zip(valuesD, valuesG)])
+        repeated_combined = np.tile(combined, (1000, 1))
+
+        return repeated_combined
 
     # Lecture et superposition d'un fichier .wav
     def play_and_mix_wav(file_path, generated_sound, samplerate, wav_weight):
@@ -101,33 +145,47 @@ def launch_song(_base_frequency, _form, _duration, _rotation_speed):
             min_length = min(len(wav_data), len(generated_sound))
             wav_data = wav_data[:min_length]
             generated_sound = generated_sound[:min_length]
+            triangle = generate_linear_triangle()
+            square = generate_linear_square()
 
             # Réduction de l'influence du fichier .wav
             wav_data = wav_weight * wav_data
 
             # Superposition des deux sons
-            mixed_sound = generated_sound + wav_data
+            print(max(generated_sound[:441000,0]))
+            mixed_sound = generated_sound[:441000] + wav_data[:441000]
+            mixed_sound_2 = triangle + wav_data[441000:882000]
+            mixed_sound_3 = square + wav_data[883000:1323000]
 
             # Lecture du son mixé
             print("Lecture du son mixé...")
             print(mixed_sound)
 
-            mixed_sound_2 = check_if_kik(mixed_sound,wav_data[:900000])
+            # mixed_sound_2 = check_if_kik(mixed_sound,wav_data[:900000])
             # draw_graph(mixed_sound[90000:120000])
-            print(mixed_sound_2[0,0])
-            print(mixed_sound_2[441,0])
+            print(mixed_sound[0,0])
+            print(mixed_sound[441,0])
 
-            value_canal_droit_triangle = generate_linear_triangle()
-            draw_graph(value_canal_droit_triangle)
+            # draw_graph(triangle)
+            # draw_graph(square)
+            # draw_graph(mixed_sound)
+            # sd.play(triangle, samplerate=samplerate)
+            # sd.wait()
 
-            draw_graph(mixed_sound_2[:441])
+            # sd.play(square, samplerate=samplerate)
+            # sd.wait()
+            duoform = np.concatenate((mixed_sound, mixed_sound_2,mixed_sound_3))
+
             # sd.play(mixed_sound_2, samplerate=samplerate)
             # sd.wait()
+            sd.play(duoform, samplerate=samplerate)
+            sd.wait()
             print("Lecture terminée.")
         except Exception as e:
             print(f"Erreur lors de la lecture ou du mixage : {e}")
 
-    play_and_mix_wav("carotte.wav", stereo_sound[:900000], fs, wav_weight=0.3)
+    print(len(stereo_sound))
+    play_and_mix_wav("carotte.wav", stereo_sound[:1323000], fs, wav_weight=0.3)
 
     print("Le son a été joué. Connecte un oscilloscope pour visualiser le cercle avec des perturbations dynamiques.")
 
@@ -141,9 +199,7 @@ def launch_song(_base_frequency, _form, _duration, _rotation_speed):
 # -> 4 for mor complexe and repetition form (la forme est moins précise)
 # comme il y a division de la fréquence la forme est moins stable
 
-
 launch_song(100,1,20,0.3)
-
 
 # TODO :
 # Modifier la vitesse de rotation en fonction du tempo
