@@ -66,6 +66,74 @@ def launch_song(_base_frequency, _form, _duration, _rotation_speed):
 
         return mixed_sound_data
 
+    def rotate_generator(_n_reapeats,bases,speed):
+        n_repeats = _n_reapeats
+        result = []
+
+        for i in range(n_repeats):
+            angle = i * (speed * np.pi / n_repeats) 
+            rotation_matrix = np.array([
+                [np.cos(angle), -np.sin(angle)],
+                [np.sin(angle), np.cos(angle)]
+            ])
+
+            transformed_shape = np.dot(bases, rotation_matrix.T)
+
+            result.append(transformed_shape)
+
+        repeated_combined = np.vstack(result)
+
+        return repeated_combined
+    
+    def rotate_with_depth(n_repeats, base_shape, speed, perspective_factor=1.5):
+        """
+        Applique une rotation 3D avec un effet de profondeur simulée.
+
+        Attention ! Déformation de la forme initiale
+
+        Arguments :
+        - n_repeats : nombre de répétitions.
+        - base_shape : forme initiale (tableau Nx3 avec x, y, z).
+        - speed : vitesse de rotation.
+        - perspective_factor : intensité de l'effet de perspective.
+        """
+        result = []
+
+        for i in range(n_repeats):
+            angle = i * (speed * np.pi / n_repeats)
+
+            # Rotation 3D sur les axes x et z pour simuler la profondeur
+            rotation_matrix_xz = np.array([
+                [np.cos(angle), 0, np.sin(angle)],
+                [0, 1, 0],
+                [-np.sin(angle), 0, np.cos(angle)]
+            ])
+
+            # Rotation autour de l'axe y pour l'effet supplémentaire
+            rotation_matrix_y = np.array([
+                [np.cos(angle), -np.sin(angle), 0],
+                [np.sin(angle), np.cos(angle), 0],
+                [0, 0, 1]
+            ])
+
+            # Combinaison des rotations
+            transformed_shape = np.dot(base_shape, rotation_matrix_xz.T)
+            transformed_shape = np.dot(transformed_shape, rotation_matrix_y.T)
+
+            # Projection en 2D avec un effet de perspective basé sur z
+            projected_points = np.array([
+                [
+                    px / (1 + perspective_factor * abs(pz)),
+                    py / (1 + perspective_factor * abs(pz))
+                ]
+                for px, py, pz in transformed_shape
+            ])
+
+            result.append(projected_points)
+
+        return np.vstack(result)
+
+
     def generate_linear_square():
         minD = -0.49
         maxD = 0.49
@@ -79,7 +147,7 @@ def launch_song(_base_frequency, _form, _duration, _rotation_speed):
         valuesD_4 = np.linspace(maxD,minD,110)
 
         valuesD = np.concatenate((valuesD_1, valuesD_2, valuesD_3, valuesD_4))
-
+        
         #first sequence
         valuesG_1 = np.linspace(minD, maxD, 110)
         #second sequence
@@ -98,6 +166,9 @@ def launch_song(_base_frequency, _form, _duration, _rotation_speed):
         return repeated_combined
 
     def generate_linear_triangle():
+        """
+        Le triangle est tourné vers la gauche si D-G et vers le bas si G-D
+        """
         minD = -0.49
         maxD = 0.49
         #first sequence
@@ -119,8 +190,10 @@ def launch_song(_base_frequency, _form, _duration, _rotation_speed):
         valuesG = np.concatenate((valuesG_1, valuesG_2, valuesG_3))
 
         #on répète le motif n fois
-        combined = np.array([[l, n] for l, n in zip(valuesD, valuesG)])
-        repeated_combined = np.tile(combined, (1000, 1))
+        base_triangle = np.array([[l, n] for l, n in zip(valuesD, valuesG)])
+        # repeated_combined = np.tile(combined, (1000, 1))
+
+        repeated_combined = rotate_generator(1000,base_triangle,3)
 
         return repeated_combined
 
@@ -167,7 +240,7 @@ def launch_song(_base_frequency, _form, _duration, _rotation_speed):
             print(mixed_sound[441,0])
 
             # draw_graph(triangle)
-            # draw_graph(square)
+            draw_graph(square[:20000])
             # draw_graph(mixed_sound)
             # sd.play(triangle, samplerate=samplerate)
             # sd.wait()
