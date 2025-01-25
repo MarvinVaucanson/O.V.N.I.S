@@ -170,6 +170,30 @@ def launch_song(_base_frequency, _form, _duration, _rotation_speed):
 
         return repeated_combined
     
+    def load_carottes():
+        key_points = [
+            ((-0.4816092399935375,-0.37894657900300266),(-0.1591693938523662,0.1592021537552604)),
+            ((-0.1591693938523662,0.1592021537552604),(0.11945458469470865,0.2209937619007812)),
+            ((0.11945458469470865,0.2209937619007812),(0.10035536035882046,-0.02055525175898196)),
+            ((0.10035536035882046,-0.02055525175898196),(-0.4816092399935375,-0.37894657900300266)),
+            ((0.11945458469470865,0.2209937619007812),(0.1037258117122125,0.3692936214500312)),
+            ((0.1037258117122125,0.3692936214500312),(0.2306794793566458,0.35244136468307097)),
+            ((0.2306794793566458,0.35244136468307097),(0.11945458469470865,0.2209937619007812)),
+            ((0.11945458469470865,0.2209937619007812),(0.26775444424395817,0.27492098355505395)),
+            ((0.26775444424395817,0.27492098355505395),(0.21045677123629358,0.21649982676292517)),
+            ((0.21045677123629358,0.21649982676292517),(0.11945458469470865,0.2209937619007812)),
+            ((0.10035536035882046,-0.02055525175898196),(-0.06816720731078127,0.046853775308858925)),
+            ((-0.06816720731078127,0.046853775308858925),(0.05736277170044882,-0.047031382612303566)),
+            ((0.05736277170044882,-0.047031382612303566),(0.10035536035882046,-0.02055525175898196)),
+            ((-0.2465128375022424,0.013426859301285444),(-0.18051558575718243,-0.05538324907736642)),
+            ((-0.18051558575718243,-0.05538324907736642),(-0.26037792668174536,-0.009713829608059324)),
+            ((-0.26037792668174536,-0.009713829608059324),(-0.2465128375022424,0.013426859301285444)),
+            ((-0.17740286614060008,-0.19160713255688813),(-0.24792461282502312,-0.16099072481698382)),
+            ((-0.24792461282502312,-0.16099072481698382),(-0.1975339375099458,-0.2040044525700567)),
+            ((-0.1975339375099458,-0.2040044525700567),(-0.17740286614060008,-0.19160713255688813)),
+        ]
+        return key_points
+
     def play_and_mix_wav(file_path, generated_sound, samplerate, wav_weight):
         """
         Joue un son mixé entre le fichier .wav et un son généré.
@@ -205,11 +229,12 @@ def launch_song(_base_frequency, _form, _duration, _rotation_speed):
                 ((0, minD_T), (maxD_T, maxD_T)),
             ]
 
+            keyPoints_k = load_carottes()
             # Ajustement de la durée si nécessaire
             min_length = min(len(wav_data), len(generated_sound))
             wav_data = wav_data[:min_length]
             generated_sound = generated_sound[:min_length]
-            triangle = generate_form_fromlistpoint(keyPoints_T,440,1000,False)
+            triangle = generate_form_fromlistpoint(keyPoints_k,440,1000,False)
             square = generate_form_fromlistpoint(keyPoints,440,1000,True)
 
             # Réduction de l'influence du fichier .wav
@@ -220,9 +245,9 @@ def launch_song(_base_frequency, _form, _duration, _rotation_speed):
             # print(max(generated_sound[:441000,0]))
             mixed_sound = generated_sound[:441000] + wav_data[:441000]
             print("mixage du premier son ok")
-            mixed_sound_2 = triangle + wav_data[441000:879000]
+            mixed_sound_2 = triangle + wav_data[441000:878000]
             print("mixage du deuxieme son ok")
-            mixed_sound_3 = square + wav_data[883000:1323000]
+            mixed_sound_3 = square + wav_data[878000:1318000]
             print("mixage du troisieme son ok")
 
             # Lecture du son mixé
@@ -236,7 +261,7 @@ def launch_song(_base_frequency, _form, _duration, _rotation_speed):
 
             # draw_graph(triangle)
             # draw_graph(generated_sound[115000:120000])
-            draw_graph(square[150000:250000])
+            draw_graph(triangle[249000:250000])
 
             # draw_graph(mixed_sound)
             
