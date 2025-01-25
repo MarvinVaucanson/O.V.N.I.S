@@ -84,55 +84,42 @@ def launch_song(_base_frequency, _form, _duration, _rotation_speed):
         repeated_combined = np.vstack(result)
 
         return repeated_combined
-    
-    def rotate_with_depth(n_repeats, base_shape, speed, perspective_factor=1.5):
-        """
-        Applique une rotation 3D avec un effet de profondeur simulée.
 
-        Attention ! Déformation de la forme initiale
-
-        Arguments :
-        - n_repeats : nombre de répétitions.
-        - base_shape : forme initiale (tableau Nx3 avec x, y, z).
-        - speed : vitesse de rotation.
-        - perspective_factor : intensité de l'effet de perspective.
-        """
-        result = []
-
-        for i in range(n_repeats):
-            angle = i * (speed * np.pi / n_repeats)
-
-            # Rotation 3D sur les axes x et z pour simuler la profondeur
-            rotation_matrix_xz = np.array([
-                [np.cos(angle), 0, np.sin(angle)],
-                [0, 1, 0],
-                [-np.sin(angle), 0, np.cos(angle)]
-            ])
-
-            # Rotation autour de l'axe y pour l'effet supplémentaire
-            rotation_matrix_y = np.array([
-                [np.cos(angle), -np.sin(angle), 0],
-                [np.sin(angle), np.cos(angle), 0],
-                [0, 0, 1]
-            ])
-
-            # Combinaison des rotations
-            transformed_shape = np.dot(base_shape, rotation_matrix_xz.T)
-            transformed_shape = np.dot(transformed_shape, rotation_matrix_y.T)
-
-            # Projection en 2D avec un effet de perspective basé sur z
-            projected_points = np.array([
-                [
-                    px / (1 + perspective_factor * abs(pz)),
-                    py / (1 + perspective_factor * abs(pz))
-                ]
-                for px, py, pz in transformed_shape
-            ])
-
-            result.append(projected_points)
-
-        return np.vstack(result)
-
+    def generate_3d_square_bug():
+        minD = -0.49
+        maxD = 0.49
+        
+        # Canal gauche
+        valuesD_1 = np.linspace(minD, minD, 110)
+        valuesD_2 = np.linspace(minD, maxD, 110)
+        valuesD_3 = np.linspace(maxD, maxD, 110)
+        valuesD_4 = np.linspace(maxD, minD, 110)
+        valuesD = np.concatenate((valuesD_1, valuesD_2, valuesD_3, valuesD_4))
+        
+        # Canal droit
+        valuesG_1 = np.linspace(minD, maxD, 110)
+        valuesG_2 = np.linspace(maxD, maxD, 110)
+        valuesG_3 = np.linspace(maxD, minD, 110)
+        valuesG_4 = np.linspace(minD, minD, 110)
+        valuesG = np.concatenate((valuesG_1, valuesG_2, valuesG_3, valuesG_4))
+        
+        # Répéter les motifs 1000 fois
+        valuesD = np.tile(valuesD, 1000)  # Canal gauche
+        valuesG = np.tile(valuesG, 1000)  # Canal droit
+        
+        # Ajuster le canal gauche pour introduire un décalage progressif
+        scaling_factor = 0.995  # Ajustement léger pour simuler une fréquence légèrement différente
+        adjusted_length = int(len(valuesD) * scaling_factor)
+        valuesD = np.interp(
+            np.linspace(0, len(valuesD), adjusted_length),
+            np.arange(len(valuesD)),
+            valuesD,
+        )
+        
+        # Fusionner les deux canaux
+        combined = np.array([[l, n] for l, n in zip(valuesD, valuesG[:len(valuesD)])])
+        
+        return combined
 
     def generate_linear_square():
         minD = -0.49
@@ -148,8 +135,8 @@ def launch_song(_base_frequency, _form, _duration, _rotation_speed):
 
         valuesD = np.concatenate((valuesD_1, valuesD_2, valuesD_3, valuesD_4))
         
-        #first sequence
-        valuesG_1 = np.linspace(minD, maxD, 110)
+        #first sequence 
+        valuesG_1 = np.linspace(minD, maxD, 110) #if i change numbers that create funny shape
         #second sequence
         valuesG_2 = np.linspace(maxD, maxD, 110)
         #third sequence
@@ -197,6 +184,63 @@ def launch_song(_base_frequency, _form, _duration, _rotation_speed):
 
         return repeated_combined
 
+    def generate_key_point_fromvect(startP,endP,nbkey):
+        #TODO : Vérifier que startP et minP sont dans l'interval
+
+        print("valeur d'entrée",startP, endP)
+        x1, y1 = startP
+        x2, y2 = endP
+        print("valeur x",x1,x2)
+        print("valeur y",y1,y2)
+
+        #assert by 0 division
+        if x1 == x2:
+            print("droite verticale")
+            x_list = [x1] * nbkey
+            y_list = np.linspace(y1, y2, nbkey).tolist()
+        else:
+            print("Attention possible division par 0", (y2 - y1), (x2 - x1))
+            m = (y2 - y1) / (x2 - x1)
+            c = y1 - m * x1
+
+            x_points = np.linspace(x1, x2, nbkey)
+            y_points = m * x_points + c
+
+            x_list = x_points.tolist()
+            y_list = y_points.tolist()
+
+        # Affichage
+        print("Liste des x :", x_list)
+        print("Liste des y :", y_list)
+        return x_list,y_list
+
+    def generate_form_fromlistpoint_square(vectNumber,keyPoint):
+        """
+        len of keyPoint tab must be equal of the number of vect 
+        I'm not sure of this information
+
+        the code for the moment support only linear equation
+        
+        """
+        #code for square shape to be generalised
+        minD = -0.49
+        maxD = 0.49
+
+        #valuesD_1,valuesG_1 = generate_key_point_fromvect(( x  ,  y ),( x  ,  y ),110)
+        valuesD_1, valuesG_1 = generate_key_point_fromvect((maxD,maxD),(minD,maxD),110)
+        valuesD_2, valuesG_2 = generate_key_point_fromvect((minD,maxD),(minD,minD),110)
+        valuesD_3, valuesG_3 = generate_key_point_fromvect((minD,minD),(maxD,minD),110)
+        valuesD_4, valuesG_4 = generate_key_point_fromvect((maxD,minD),(maxD,maxD),110)
+
+        valuesD = np.concatenate((valuesD_1, valuesD_2, valuesD_3, valuesD_4))
+        valuesG = np.concatenate((valuesG_1, valuesG_2, valuesG_3, valuesG_4))
+
+        #on répète le motif n fois
+        combined = np.array([[l, n] for l, n in zip(valuesD, valuesG)])
+        repeated_combined = np.tile(combined, (1000, 1))
+
+        return repeated_combined
+    
     # Lecture et superposition d'un fichier .wav
     def play_and_mix_wav(file_path, generated_sound, samplerate, wav_weight):
         """
@@ -219,40 +263,39 @@ def launch_song(_base_frequency, _form, _duration, _rotation_speed):
             wav_data = wav_data[:min_length]
             generated_sound = generated_sound[:min_length]
             triangle = generate_linear_triangle()
-            square = generate_linear_square()
+            square = generate_form_fromlistpoint_square()
 
             # Réduction de l'influence du fichier .wav
             wav_data = wav_weight * wav_data
 
+
             # Superposition des deux sons
-            print(max(generated_sound[:441000,0]))
-            mixed_sound = generated_sound[:441000] + wav_data[:441000]
-            mixed_sound_2 = triangle + wav_data[441000:882000]
+            # print(max(generated_sound[:441000,0]))
+            # mixed_sound = generated_sound[:441000] + wav_data[:441000]
+            # mixed_sound_2 = triangle + wav_data[441000:882000]
             mixed_sound_3 = square + wav_data[883000:1323000]
 
             # Lecture du son mixé
-            print("Lecture du son mixé...")
-            print(mixed_sound)
+            # print("Lecture du son mixé...")
+            # print(mixed_sound)
 
             # mixed_sound_2 = check_if_kik(mixed_sound,wav_data[:900000])
             # draw_graph(mixed_sound[90000:120000])
-            print(mixed_sound[0,0])
-            print(mixed_sound[441,0])
+            # print(mixed_sound[0,0])
+            # print(mixed_sound[441,0])
 
             # draw_graph(triangle)
-            draw_graph(square[:20000])
+            # draw_graph(generated_sound[115000:120000])
+            draw_graph(square[150000:250000])
+
             # draw_graph(mixed_sound)
-            # sd.play(triangle, samplerate=samplerate)
-            # sd.wait()
+            
+            # duoform = np.concatenate((mixed_sound, mixed_sound_2,mixed_sound_3))
 
-            # sd.play(square, samplerate=samplerate)
-            # sd.wait()
-            duoform = np.concatenate((mixed_sound, mixed_sound_2,mixed_sound_3))
-
-            # sd.play(mixed_sound_2, samplerate=samplerate)
-            # sd.wait()
-            sd.play(duoform, samplerate=samplerate)
+            sd.play(mixed_sound_3, samplerate=samplerate)
             sd.wait()
+            # sd.play(duoform, samplerate=samplerate)
+            # sd.wait()
             print("Lecture terminée.")
         except Exception as e:
             print(f"Erreur lors de la lecture ou du mixage : {e}")
