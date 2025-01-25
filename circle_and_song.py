@@ -121,85 +121,16 @@ def launch_song(_base_frequency, _form, _duration, _rotation_speed):
         
         return combined
 
-    def generate_linear_square():
-        minD = -0.49
-        maxD = 0.49
-        #first sequence
-        valuesD_1 = np.linspace(minD, minD, 110)
-        #second sequence
-        valuesD_2 = np.linspace(minD, maxD, 110)
-        #third sequence
-        valuesD_3 = np.linspace(maxD,maxD,110)
-        #4 sequence
-        valuesD_4 = np.linspace(maxD,minD,110)
-
-        valuesD = np.concatenate((valuesD_1, valuesD_2, valuesD_3, valuesD_4))
-        
-        #first sequence 
-        valuesG_1 = np.linspace(minD, maxD, 110) #if i change numbers that create funny shape
-        #second sequence
-        valuesG_2 = np.linspace(maxD, maxD, 110)
-        #third sequence
-        valuesG_3 = np.linspace(maxD,minD,110)
-        #4 sequence
-        valuesG_4 = np.linspace(minD,minD,110)
-
-        valuesG = np.concatenate((valuesG_1, valuesG_2, valuesG_3, valuesG_4))
-
-        #on répète le motif n fois
-        combined = np.array([[l, n] for l, n in zip(valuesD, valuesG)])
-        repeated_combined = np.tile(combined, (1000, 1))
-
-        return repeated_combined
-
-    def generate_linear_triangle():
-        """
-        Le triangle est tourné vers la gauche si D-G et vers le bas si G-D
-        """
-        minD = -0.49
-        maxD = 0.49
-        #first sequence
-        valuesD_1 = np.linspace(minD, maxD, 147)
-        #second sequence
-        valuesD_2 = np.linspace(maxD, maxD, 147)
-        #third sequence
-        valuesD_3 = np.linspace(maxD,minD,147)
-
-        valuesD = np.concatenate((valuesD_1, valuesD_2, valuesD_3))
-
-        #first sequence
-        valuesG_1 = np.linspace(0,maxD,147)
-        #second sequence
-        valuesG_2 = np.linspace(maxD, minD, 147)
-        #third sequence
-        valuesG_3 = np.linspace(minD,0,147)
-
-        valuesG = np.concatenate((valuesG_1, valuesG_2, valuesG_3))
-
-        #on répète le motif n fois
-        base_triangle = np.array([[l, n] for l, n in zip(valuesD, valuesG)])
-        # repeated_combined = np.tile(combined, (1000, 1))
-
-        repeated_combined = rotate_generator(1000,base_triangle,3)
-
-        return repeated_combined
-
     def generate_key_point_fromvect(startP,endP,nbkey):
         #TODO : Vérifier que startP et minP sont dans l'interval
-
-        print("valeur d'entrée",startP, endP)
         x1, y1 = startP
         x2, y2 = endP
-        print("valeur x",x1,x2)
-        print("valeur y",y1,y2)
 
         #assert by 0 division
         if x1 == x2:
-            print("droite verticale")
             x_list = [x1] * nbkey
             y_list = np.linspace(y1, y2, nbkey).tolist()
         else:
-            print("Attention possible division par 0", (y2 - y1), (x2 - x1))
             m = (y2 - y1) / (x2 - x1)
             c = y1 - m * x1
 
@@ -209,39 +140,36 @@ def launch_song(_base_frequency, _form, _duration, _rotation_speed):
             x_list = x_points.tolist()
             y_list = y_points.tolist()
 
-        # Affichage
-        print("Liste des x :", x_list)
-        print("Liste des y :", y_list)
         return x_list,y_list
 
-    def generate_form_fromlistpoint_square(vectNumber,keyPoint):
-        """
-        len of keyPoint tab must be equal of the number of vect 
-        I'm not sure of this information
-
-        the code for the moment support only linear equation
-        
-        """
-        #code for square shape to be generalised
+    def generate_form_fromlistpoint(keyPoints, nbkey=440, repetition=1000,rotation=False):
+        #inutile pour le moment l'objectif est des les avoirs pour limiter la saturation
         minD = -0.49
         maxD = 0.49
 
-        #valuesD_1,valuesG_1 = generate_key_point_fromvect(( x  ,  y ),( x  ,  y ),110)
-        valuesD_1, valuesG_1 = generate_key_point_fromvect((maxD,maxD),(minD,maxD),110)
-        valuesD_2, valuesG_2 = generate_key_point_fromvect((minD,maxD),(minD,minD),110)
-        valuesD_3, valuesG_3 = generate_key_point_fromvect((minD,minD),(maxD,minD),110)
-        valuesD_4, valuesG_4 = generate_key_point_fromvect((maxD,minD),(maxD,maxD),110)
+        #calcul du nombre de points par segment
+        nb_segments = len(keyPoints)
+        if nb_segments == 0:
+            raise ValueError("La liste des keyPoints est vide.")
+        nbkey_per_segment = max(2, nbkey // nb_segments)
 
-        valuesD = np.concatenate((valuesD_1, valuesD_2, valuesD_3, valuesD_4))
-        valuesG = np.concatenate((valuesG_1, valuesG_2, valuesG_3, valuesG_4))
+        all_x = []
+        all_y = []
 
-        #on répète le motif n fois
-        combined = np.array([[l, n] for l, n in zip(valuesD, valuesG)])
-        repeated_combined = np.tile(combined, (1000, 1))
+        for startP, endP in keyPoints:
+            x_list, y_list = generate_key_point_fromvect(startP, endP, nbkey_per_segment)
+            all_x.extend(x_list)
+            all_y.extend(y_list)
+        
+        combined = np.array([[x, y] for x, y in zip(all_x, all_y)])
+        
+        if(rotation):
+            repeated_combined = rotate_generator(repetition,combined,3)
+        else :
+            repeated_combined = np.tile(combined, (repetition, 1))
 
         return repeated_combined
     
-    # Lecture et superposition d'un fichier .wav
     def play_and_mix_wav(file_path, generated_sound, samplerate, wav_weight):
         """
         Joue un son mixé entre le fichier .wav et un son généré.
@@ -258,12 +186,31 @@ def launch_song(_base_frequency, _form, _duration, _rotation_speed):
             if wav_samplerate != samplerate:
                 raise ValueError("La fréquence d'échantillonnage du fichier .wav ne correspond pas à celle du son généré.")
 
+            #square
+            minD = -0.49
+            maxD = 0.49
+            keyPoints = [
+                ((maxD, maxD), (minD, maxD)),
+                ((minD, maxD), (minD, minD)),
+                ((minD, minD), (maxD, minD)),
+                ((maxD, minD), (maxD, maxD))
+            ]
+
+            #triangle
+            minD_T = -0.49
+            maxD_T = 0.49
+            keyPoints_T = [
+                ((maxD_T, maxD_T), (minD_T, maxD_T)),
+                ((minD_T, maxD_T), (0, minD_T)),
+                ((0, minD_T), (maxD_T, maxD_T)),
+            ]
+
             # Ajustement de la durée si nécessaire
             min_length = min(len(wav_data), len(generated_sound))
             wav_data = wav_data[:min_length]
             generated_sound = generated_sound[:min_length]
-            triangle = generate_linear_triangle()
-            square = generate_form_fromlistpoint_square()
+            triangle = generate_form_fromlistpoint(keyPoints_T,440,1000,False)
+            square = generate_form_fromlistpoint(keyPoints,440,1000,True)
 
             # Réduction de l'influence du fichier .wav
             wav_data = wav_weight * wav_data
@@ -271,9 +218,12 @@ def launch_song(_base_frequency, _form, _duration, _rotation_speed):
 
             # Superposition des deux sons
             # print(max(generated_sound[:441000,0]))
-            # mixed_sound = generated_sound[:441000] + wav_data[:441000]
-            # mixed_sound_2 = triangle + wav_data[441000:882000]
+            mixed_sound = generated_sound[:441000] + wav_data[:441000]
+            print("mixage du premier son ok")
+            mixed_sound_2 = triangle + wav_data[441000:879000]
+            print("mixage du deuxieme son ok")
             mixed_sound_3 = square + wav_data[883000:1323000]
+            print("mixage du troisieme son ok")
 
             # Lecture du son mixé
             # print("Lecture du son mixé...")
@@ -290,12 +240,12 @@ def launch_song(_base_frequency, _form, _duration, _rotation_speed):
 
             # draw_graph(mixed_sound)
             
-            # duoform = np.concatenate((mixed_sound, mixed_sound_2,mixed_sound_3))
+            duoform = np.concatenate((mixed_sound, mixed_sound_2,mixed_sound_3))
 
-            sd.play(mixed_sound_3, samplerate=samplerate)
-            sd.wait()
-            # sd.play(duoform, samplerate=samplerate)
+            # sd.play(mixed_sound_3, samplerate=samplerate)
             # sd.wait()
+            sd.play(duoform, samplerate=samplerate)
+            sd.wait()
             print("Lecture terminée.")
         except Exception as e:
             print(f"Erreur lors de la lecture ou du mixage : {e}")
