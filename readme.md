@@ -9,7 +9,7 @@ Mais pourquoi me direz vous ? Parce que OsciStudio n'est pas gratuit et que j'ai
 De plus je voulais coder un projet qui me fait kiffer donc même si quelque choses de mieux existes je veux juste coder mon truc pour le "kiff"
 
 ## Source et inspiration
-Mon travail se base à partir des travaux de Eric Lennartson sur le même sujet.
+Mon travail se base à partir des travaux de Eric Lennartson, C.Hallen et Jerobeam Fenderson sur le même sujet.
 Je cherche aussi des inspirations visuel et auditive d'un peux partouts. Un projet de jeu sur oscilloscope vu sur youtube m'a motivé à lancer ce projet
 (je n'arrive cependant pas à retrouver la source)
 
