@@ -28,6 +28,7 @@ def launch_live_mix(_base_frequency, _form, _rotation_speed, mic_weight=0.5):
 
     # start audio
     try:
+        
         print("Streaming en direct... Parlez dans le microphone !")
         with sd.Stream(channels=2, samplerate=fs, callback=audio_callback):
             input("Appuyez sur Entrée pour arrêter.\n")

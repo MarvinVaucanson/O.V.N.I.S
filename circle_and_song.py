@@ -1,4 +1,5 @@
 import numpy as np
+import open3d as o3d
 import sounddevice as sd
 import soundfile as sf
 import matplotlib.pyplot as plt
@@ -194,6 +195,47 @@ def launch_song(_base_frequency, _form, _duration, _rotation_speed):
         ]
         return key_points
 
+    def create_flat_rotating_cube_animation(num_frames, rotation_speed):
+        # Create a cube
+        cube = o3d.geometry.TriangleMesh.create_box()
+        cube.compute_vertex_normals()
+        # Set the initial rotation
+        rotation_matrix = np.eye(3)
+        # List to store corner coordinates
+        corners_list = []
+        # Create a visualizer
+        vis = o3d.visualization.Visualizer()
+        vis.create_window()
+        # Add the cube to the visualizer
+        vis.add_geometry(cube)
+        # Set the camera to a flat view
+        ctr = vis.get_view_control()
+        ctr.set_front([0, 0, -1])  # Looking straight at the cube from the front
+        ctr.set_lookat([0, 0, 0])   # Center of the cube
+        ctr.set_up([0, 1, 0])       # Up direction
+        ctr.set_zoom(0.5)           # Zoom out to see the whole cube
+        for frame in range(num_frames):
+            # Calculate the rotation angle
+            angle = frame * rotation_speed
+            rotation_matrix = np.array([
+                [np.cos(angle), -np.sin(angle), 0],
+                [np.sin(angle), np.cos(angle), 0],
+                [0, 0, 1]
+            ])
+            # Rotate the cube
+            cube.rotate(rotation_matrix, center=cube.get_center())
+            # Update the visualizer
+            vis.update_geometry(cube)
+            vis.poll_events()
+            vis.update_renderer()
+            # Store the corners of the cube
+            corners = np.array(cube.vertices)
+            # Ensure corners are within the interval [-0.5, 0.5]
+            corners = np.clip(corners, -0.5, 0.5)
+            corners_list.append(corners)
+        vis.destroy_window()
+        return np.array(corners_list)
+    
     def play_and_mix_wav(file_path, generated_sound, samplerate, wav_weight):
         """
         Joue un son mixé entre le fichier .wav et un son généré.
@@ -250,6 +292,39 @@ def launch_song(_base_frequency, _form, _duration, _rotation_speed):
             mixed_sound_3 = square + wav_data[878000:1318000]
             print("mixage du troisieme son ok")
 
+            # Example usage
+            corners_data = create_flat_rotating_cube_animation(200,0.00001)
+            # Access x and y coordinates using NumPy
+
+            x_coords = corners_data[:, :, 0]  # All frames, all corners, x-coordinates
+            y_coords = corners_data[:, :, 1]  # All frames, all corners, y-coordinates
+            # Print the first 5 frames of corner coordinates
+
+            tab = []
+            for i in range(200):
+                print(f"Frame {i + 1} Coordinates:\n", corners_data[i])
+
+                keyPoints_3D_BIG = [
+                    ((corners_data[i][0][0],corners_data[i][0][1]), (corners_data[i][1][0],corners_data[i][1][1])),
+                    ((corners_data[i][1][0],corners_data[i][1][1]), (corners_data[i][2][0],corners_data[i][2][1])),
+                    ((corners_data[i][2][0],corners_data[i][2][1]), (corners_data[i][3][0],corners_data[i][3][1])),
+                    ((corners_data[i][3][0],corners_data[i][3][1]), (corners_data[i][0][0],corners_data[i][0][1])),
+                    ((corners_data[i][4][0],corners_data[i][4][1]), (corners_data[i][5][0],corners_data[i][5][1])),
+                    ((corners_data[i][5][0],corners_data[i][5][1]), (corners_data[i][6][0],corners_data[i][6][1])),
+                    ((corners_data[i][6][0],corners_data[i][6][1]), (corners_data[i][7][0],corners_data[i][7][1])),
+                    ((corners_data[i][7][0],corners_data[i][7][1]), (corners_data[i][4][0],corners_data[i][4][1])),
+                    ((corners_data[i][0][0],corners_data[i][0][1]), (corners_data[i][4][0],corners_data[i][4][1])),
+                    ((corners_data[i][1][0],corners_data[i][1][1]), (corners_data[i][5][0],corners_data[i][5][1])),
+                    ((corners_data[i][2][0],corners_data[i][2][1]), (corners_data[i][6][0],corners_data[i][6][1])),
+                    ((corners_data[i][3][0],corners_data[i][3][1]), (corners_data[i][7][0],corners_data[i][7][1])),
+                ]
+
+                square = generate_form_fromlistpoint(keyPoints_3D_BIG,440,20,True)
+                tab.append(square)
+
+            tab = np.vstack(tab)
+            print(tab)
+
             # Lecture du son mixé
             # print("Lecture du son mixé...")
             # print(mixed_sound)
@@ -260,8 +335,8 @@ def launch_song(_base_frequency, _form, _duration, _rotation_speed):
             # print(mixed_sound[441,0])
 
             # draw_graph(triangle)
-            # draw_graph(generated_sound[115000:120000])
-            draw_graph(triangle[249000:250000])
+            draw_graph(tab[115000:120000])
+            # draw_graph(triangle[249000:250000])
 
             # draw_graph(mixed_sound)
             
@@ -269,7 +344,10 @@ def launch_song(_base_frequency, _form, _duration, _rotation_speed):
 
             # sd.play(mixed_sound_3, samplerate=samplerate)
             # sd.wait()
-            sd.play(duoform, samplerate=samplerate)
+            # sd.play(duoform, samplerate=samplerate)
+            # sd.wait()
+
+            sd.play(tab)
             sd.wait()
             print("Lecture terminée.")
         except Exception as e:
