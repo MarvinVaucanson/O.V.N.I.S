@@ -1,5 +1,5 @@
 import numpy as np
-import open3d as o3d
+# import open3d as o3d //pas dispo en python 3.13.2 je vais creer un .env
 import sounddevice as sd
 import soundfile as sf
 import matplotlib.pyplot as plt
